@@ -15,15 +15,29 @@ api_id = os.getenv('TELEGRAM_API_KEY')  #put you telegram API key here
 api_hash = os.getenv('TELEGRAM_API_HASH') #put yout telegram API hash here
 phone_number = os.getenv('PHONE_NUMBER')
 master_download_folder = os.getenv('DOWNLOADS_FOLDER')
-concurrent_downloads = os.getenv('CONCURRENT_DOWNLOADS')
+concurrent_downloads = int(os.getenv('CONCURRENT_DOWNLOADS'))
 
-client = TelegramClient('session_name', api_id, api_hash)
+#session name is the phone number
+session_name = phone_number.replace('+', '')
+
+client = TelegramClient(session_name, api_id, api_hash)
 
 # Set up argument parser
 parser = argparse.ArgumentParser(description='Download media from a Telegram channel or group.')
 parser.add_argument('channel', type=str, help='The username or invite link of the Telegram channel or group')
+parser.add_argument('--ext', type=str, help='Comma-separated list of file extensions to download (e.g., pdf,jpg)')
+
 args = parser.parse_args()
 channel = args.channel
+allowed_extensions = args.ext.lower().split(',') if args.ext else None
+
+
+# strip @ from channel name if present
+channel = channel.replace('@', '')
+
+# strip https://t.me/ if present
+channel = channel.replace('https://t.me/', '')
+
 
 # Define a function to download media files
 async def download_media(message, channel_name, semaphore):
@@ -35,21 +49,30 @@ async def download_media(message, channel_name, semaphore):
 
                 # add a master download folder
                 os.makedirs(master_download_folder, exist_ok=True)
-                # Remove @ if present
-                folder_name = channel_name.replace('@', '') 
                 # append channel name to master download folder
-                download_folder = os.path.join(master_download_folder, folder_name)
+                download_folder = os.path.join(master_download_folder, channel_name)
                 # Create folder with channel name if it doesn't exist
                 os.makedirs(download_folder, exist_ok=True)
             
-                # Get the file name
+                # Get the file name and extension
                 file_name = message.file.name if hasattr(message.file, 'name') else f"file_{message.id}"
-                file_path = os.path.join(folder_name, file_name)
+                _, file_extension = os.path.splitext(file_name)
+                file_extension = file_extension[1:].lower()  # Remove the dot and convert to lowercase
+
+
+
+                # Check if the file extension is allowed
+                if allowed_extensions and file_extension not in allowed_extensions:
+                    print(f"Skipping file with extension {file_extension}: {file_name}")
+                    return
                 
+                file_path = os.path.join(download_folder, file_name)
                 # Check if file already exists
                 if os.path.exists(file_path):
-                    print(f"File already exists: {file_path}")
-                    return
+                    #check if the file has the same size as the original file
+                    if os.path.getsize(file_path) == message.file.size:
+                        print(f"File already exists: {file_path}")
+                        return
                 
                 # Download the file
                 print(f"Downloading media to: {file_path}")
@@ -113,6 +136,8 @@ def main():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Download media from a Telegram channel or group.')
     parser.add_argument('channel', type=str, help='The username or invite link of the Telegram channel or group')
+    parser.add_argument('--ext', type=str, help='Comma-separated list of file extensions to download (e.g., pdf,jpg)')
     args = parser.parse_args()
     channel = args.channel
+    allowed_extensions = args.ext.lower().split(',') if args.ext else None
     main()
