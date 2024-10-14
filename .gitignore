@@ -2,3 +2,4 @@
 downloads/
 *.session
 *.log
+__pycache__
