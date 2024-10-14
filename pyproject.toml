@@ -11,6 +11,7 @@ telethon = "^1.37.0"
 asyncio = "^3.4.3"
 python-dotenv = "^1.0.1"
 tqdm = "^4.66.5"
+rich = "^13.9.2"
 
 [tool.poetry.scripts]
 telegram-downloader = "main:main"
