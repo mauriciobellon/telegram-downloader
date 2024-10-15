@@ -12,6 +12,8 @@ asyncio = "^3.4.3"
 python-dotenv = "^1.0.1"
 tqdm = "^4.66.5"
 rich = "^13.9.2"
+fuzzywuzzy = "^0.18.0"
+python-levenshtein = "^0.26.0"
 
 [tool.poetry.scripts]
 telegram-downloader = "main:main"

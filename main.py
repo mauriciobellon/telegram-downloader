@@ -44,9 +44,15 @@ async def main():
     # Initialize MediaDownloader
     downloader = MediaDownloader(client, download_folder, allowed_extensions, Settings.CONCURRENT_DOWNLOADS)
 
-    # Iterate and download media
+    # Start the download processor
+    asyncio.create_task(downloader.process_downloads())
+
+    # Iterate and queue media for download
     async for message in client.iter_messages(entity):
         await downloader.download_media(message)
+
+    # Wait for all downloads to complete
+    await downloader.wait_for_downloads()
 
     logger.info("Download completed.")
     await client.disconnect()

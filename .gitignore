@@ -1,5 +1,10 @@
 .env
 downloads/
 *.session
+*.session-journals
 *.log
 __pycache__
+found_books.json
+matched_downloads/
+Calibre/
+founded_books.json
